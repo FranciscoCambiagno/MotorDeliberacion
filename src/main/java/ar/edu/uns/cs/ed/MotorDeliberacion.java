@@ -1,7 +1,11 @@
 package ar.edu.uns.cs.ed;
 
-import main.java.ar.edu.uns.cs.ed.tdas.excepciones.InvalidPositionException;
-import main.java.ar.edu.uns.cs.ed.tdas.tdalista.PositionList;
+import ar.edu.uns.cs.ed.tdas.Position;
+import ar.edu.uns.cs.ed.tdas.excepciones.EmptyStackException;
+import ar.edu.uns.cs.ed.tdas.excepciones.InvalidPositionException;
+import ar.edu.uns.cs.ed.tdas.tdaarbol.Arbol;
+import ar.edu.uns.cs.ed.tdas.tdalista.ListaDoblementeEnlazada;
+import ar.edu.uns.cs.ed.tdas.tdalista.PositionList;
 
 /**
  * Incluir los import necesarios para las clases utilizadas en el código.
@@ -16,7 +20,9 @@ public class MotorDeliberacion {
     /**
      * Incluir los atributos necesarios para el desarrollo.
      */
-
+	private Arbol<Position<Opinion>> arbol;
+	
+	
     /**
      * Constructor de la clase MotorDeliveracion.
      * Inicializa el árbol de debate, y las estructuras correspondientes.  
