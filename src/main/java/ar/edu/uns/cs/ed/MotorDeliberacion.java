@@ -1,9 +1,11 @@
 package ar.edu.uns.cs.ed;
 
 import ar.edu.uns.cs.ed.tdas.Position;
+import ar.edu.uns.cs.ed.tdas.TNodo;
 import ar.edu.uns.cs.ed.tdas.excepciones.EmptyStackException;
 import ar.edu.uns.cs.ed.tdas.excepciones.InvalidPositionException;
 import ar.edu.uns.cs.ed.tdas.tdaarbol.Arbol;
+import ar.edu.uns.cs.ed.tdas.tdaarbol.Tree;
 import ar.edu.uns.cs.ed.tdas.tdalista.ListaDoblementeEnlazada;
 import ar.edu.uns.cs.ed.tdas.tdalista.PositionList;
 
@@ -15,12 +17,12 @@ import ar.edu.uns.cs.ed.tdas.tdalista.PositionList;
  * Clase que representa el motor de deliveración.
  * 
  */
-public class MotorDeliberacion {
+public class MotorDeliberacion{
 
     /**
      * Incluir los atributos necesarios para el desarrollo.
      */
-	private Arbol<Position<Opinion>> arbol;
+	private Tree<Opinion> arbol;
 	
 	
     /**
@@ -29,7 +31,7 @@ public class MotorDeliberacion {
      * 
      */
     public MotorDeliberacion() {
-    //TODO: Inicializar el árbol de debate y las estructuras correspondientes. 
+    //TODO: Inicializar el árbol de debate y las estructuras correspondientes.
     }
 
     /**
