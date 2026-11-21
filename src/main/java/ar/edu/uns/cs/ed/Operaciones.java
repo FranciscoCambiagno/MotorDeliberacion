@@ -28,6 +28,9 @@ public class Operaciones {
         return id;
     }
 
+    public String toString() {
+    	return "Operacion: " + operacion + " Id: " + id + " Detalle: " + detalle;
+    }
     
     
 }

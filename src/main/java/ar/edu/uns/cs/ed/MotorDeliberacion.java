@@ -45,47 +45,53 @@ public class MotorDeliberacion{
      */
     public MotorDeliberacion() {
     //TODO: Inicializar el árbol de debate y las estructuras correspondientes.
-    	clearDebate();
+    	arbol = new Arbol<Opinion>();														// Arbol de Opinones
+    	historial = new PilaEnlazada<Operaciones>(); 										// Historial de operacioens que se pueden deshacer
+        posicionesOpiniones = new MapeoConHashAbierto<String,Position<Opinion>>();  		// Guarda la posicion de las opniones en base a su ID
+        opinionesPorUsuario = new DiccionarioConHashAbierto<String,Position<Opinion>>();	// Guarda la posicion de las opiniones por ID de usuario				
+        logs = new ColaConNodo<Operaciones>();												// Logs de operaciones. No se pueden deshacer.
     }
 
     /**
-     * Registra una operación en la estructura que almacena las operaciones.
-     * Las siguientes operaciones se pueden deshacer: "CREAR_DEBATE", "POSTEAR". El resto de las operaciones no se pueden deshacer.
-     * 
-     * La operación eliminar posteo no se puede deshacer, y si se intenta deshacer una operación cuando no hay operaciones registradas, se lanza una excepción.
-     * 
-     * 
-     * @param operacion : La operación a registrar. 1: CREAR_DEBATE, 2: POSTEAR
-     * @param detalle : Detalle de la operación, como el id del argumento o el id del usuario. El texto de la operación se almacena en mayúsculas para mantener consistencia. Por ejemplo: "CREAR_DEBATE:" + idRaiz.trim()
-     * @param idArgumento : Identificador del argumento o de root en caso de ser el tema raíz.
-     * @throws IllegalArgumentException si la operación es nula o vacía.
-     */
-    public void registrarOperacion(int operacion, String detalle, String idArgumento) {
-        //TODO: Implementar el registro de la operación en la estructura correspondiente.
-    	
-    	/*------------------------------------------------------------------------
-    	 * operacion : 1: CREAR_DEBATE, 2: POSTEAR, 3: ELIMINAR_POSTEO
-    	 * detalle : <nombre operacion> + ":" + ID ususario + ":" + ID argumento + ":" + ID argumento padre (null si es root) + ":" + texto.trim();
-    	 * idArgumento : ID argumento
-    	//----------------------------------------------------------------------*/
-    	
-    	if(operacion < 1 || operacion > 3)
-    		throw new IllegalArgumentException("Operacion invalida.");
-    	
-    	if(detalle ==  null || idArgumento == null)
-    		throw new IllegalArgumentException("El detalle y el idArgumento no puedens ser nulos.");
-    	
-    	detalle = detalle.trim();
-    	idArgumento = idArgumento.trim();    	
-    	
-    	if(detalle.equals("") || idArgumento.equals(""))
-    		throw new IllegalArgumentException("El detalle y el idArgumento no puedens ser vacios.");
-    	
-    	
-    	historial.push(new Operaciones(operacion, detalle, idArgumento));
-    }
+	 * Registra una operación en la estructura que almacena las operaciones.
+	 * Las siguientes operaciones se pueden deshacer: "CREAR_DEBATE", "POSTEAR". El resto de las operaciones no se pueden deshacer.
+	 * 
+	 * La operación eliminar posteo no se puede deshacer, y si se intenta deshacer una operación cuando no hay operaciones registradas, se lanza una excepción.
+	 * 
+	 * 
+	 * @param operacion : La operación a registrar. 1: CREAR_DEBATE, 2: POSTEAR
+	 * @param detalle : Detalle de la operación, como el id del argumento o el id del usuario. El texto de la operación se almacena en mayúsculas para mantener consistencia. Por ejemplo: "CREAR_DEBATE:" + idRaiz.trim()
+	 * @param idArgumento : Identificador del argumento o de root en caso de ser el tema raíz.
+	 * @throws IllegalArgumentException si la operación es nula o vacía.
+	 */
+	public void registrarOperacion(int operacion, String detalle, String idArgumento) {
+	    //TODO: Implementar el registro de la operación en la estructura correspondiente.
+		
+		/*------------------------------------------------------------------------
+		 * operacion : 1: CREAR_DEBATE, 2: POSTEAR, 3: ELIMINAR_POSTEO
+		 * detalle : <nombre operacion> + ":" + ID ususario + ":" + ID argumento + ":" + ID argumento padre (null si es root) + ":" + texto.trim();
+		 * idArgumento : ID argumento
+		//----------------------------------------------------------------------*/
+		
+		if(operacion < 1 || operacion > 8)
+			throw new IllegalArgumentException("Operacion invalida.");
+		
+		if(detalle ==  null || idArgumento == null)
+			throw new IllegalArgumentException("El detalle y el idArgumento no puedens ser nulos.");
+		
+		detalle = detalle.trim();
+		idArgumento = idArgumento.trim();    	
+		
+		if(detalle.equals("") || idArgumento.equals(""))
+			throw new IllegalArgumentException("El detalle y el idArgumento no puedens ser vacios.");
+		
+		if(operacion < 4) {
+			historial.push(new Operaciones(operacion, detalle, idArgumento));
+		}
+		logs.enqueue(new Operaciones(operacion,detalle,idArgumento));
+	}
 
-/**
+	/**
  * Deshace la última operación registrada en el motor de deliveración.
  * La operación eliminar posteo no se puede deshacer, y si se intenta deshacer una operación cuando no hay operaciones registradas, se lanza una excepción.
  * @return
@@ -96,26 +102,24 @@ public class MotorDeliberacion{
     	
     	if(historial.isEmpty())
     		throw new EmptyStackException("No se realizo ninguna operacion aun.");
+
+    	// La operacion es ELIMINAR_POSTEO no se puede deshacer ERROR
+    	if(historial.top().getOperacion() == 3)
+    		throw new IllegalStateException("No se pudo deshacer la operación POSTEAR.");
     	
     	Operaciones ultimaOperacion = historial.pop();
     	String texto = null;
     	
     	int operacion = ultimaOperacion.getOperacion();
     	
-    	// La operacion es ELIMINAR_POSTEO no se puede deshacer ERROR
-    	if(operacion == 3)
-    		throw new IllegalStateException("No se puede deshacer la eliminacion de un posteo.");
-    	
-    	//System.out.println(ultimaOperacion.getOperacion() + "-------");
     	// la operacion es POSTEAR se puede deshacer
     	if(operacion == 2) {
     		String idPosOpinion = ultimaOperacion.getId();
-    		//System.out.println(posicionesOpiniones.get(idPosOpinion).element().getUsuario().getId());
     		String idUsuario = posicionesOpiniones.get(idPosOpinion).element().getUsuario().getId(); // getIdUsuarioOperaciones(ultimaOperacion);
-    		//String idPosOpinionPadre = arbol.parent(posicionesOpiniones.get(idPosOpinion)).element().getIdArgumento();
     		texto = ultimaOperacion.getDetalle();
     		
-    		eliminarPosteo(idUsuario, idPosOpinion);
+            eliminarPosteo(idUsuario, idPosOpinion);
+            historial.pop();
     	
         // la operacion es CREAR_DEBATE se puede deshacer
     	}else if(operacion == 1) {	    		
@@ -123,12 +127,7 @@ public class MotorDeliberacion{
     	}    	
     	
     	return texto;
-    }
-    
-    private String getIdUsuarioOperaciones(Operaciones operacion) {
-    	return operacion.getDetalle().split(":")[1];
-    }
-    
+    }    
     
 /**
  * Crea un nuevo debate con un argumento raíz.
@@ -175,42 +174,42 @@ public class MotorDeliberacion{
     public void Postear(Usuario usr, String idNuevo, String idPadre, String postura, String texto) {
         //TODO: Implementar la funcionalidad de postear un nuevo argumento en el debate.
     	
-    	if(arbol.isEmpty())
+    	if(arbol.isEmpty())//c1
     		throw new IllegalStateException("No existe un debate en curso.");
     	
-    	if(usr == null)
+    	if(usr == null)//c2
     		throw new IllegalArgumentException("El usuario no puede ser nulo.");
     	
-    	if(idNuevo == null || texto == null || idPadre == null)
+    	if(idNuevo == null || texto == null || idPadre == null)//c3
     		throw new IllegalArgumentException("No pueden haber parametros nulos.");
     	
-    	idPadre = idPadre.trim();
-    	texto = texto.trim(); 
-    	idNuevo = idNuevo.trim(); 
-    	postura = postura.trim().toUpperCase();
+    	idPadre = idPadre.trim();//c4
+    	texto = texto.trim(); //c5
+    	idNuevo = idNuevo.trim(); //c6
+    	postura = postura.trim().toUpperCase();//c7
 
-    	if(idNuevo.equals("") || texto.equals("") || idPadre.equals(""))
+    	if(idNuevo.equals("") || texto.equals("") || idPadre.equals(""))//c8
     		throw new IllegalArgumentException("No pueden haber parametros vacios.");
     	
-    	if(!postura.equals("AFAVOR") && !postura.equals("ENCONTRA"))	// Las posturas estan seteadas asi en el tester
+    	if(!postura.equals("AFAVOR") && !postura.equals("ENCONTRA"))//c9	// Las posturas estan seteadas asi en el tester
     		throw new IllegalArgumentException("La postura no es valida.");
     	
-    	if(posicionesOpiniones.get(idNuevo) != null)
+    	if(posicionesOpiniones.get(idNuevo) != null)//c10
     		throw new IllegalArgumentException("Ya existe un argumento con ese ID.");
     	
-    	Position<Opinion> posOpinonPadre = posicionesOpiniones.get(idPadre);
+    	Position<Opinion> posOpinonPadre = posicionesOpiniones.get(idPadre);//c11
     	if(posOpinonPadre == null)
     		throw new IllegalArgumentException("No existe una opinon con el IDPadre pasado como parametro.");
     	
-    	Opinion nuevaOpinon = new Opinion(idNuevo, texto, postura, usr);
-    	Position<Opinion> posOpinionNueva = arbol.addLastChild(posOpinonPadre, nuevaOpinon);
+    	Opinion nuevaOpinon = new Opinion(idNuevo, texto, postura, usr);//c12
+    	Position<Opinion> posOpinionNueva = arbol.addLastChild(posOpinonPadre, nuevaOpinon);//c13
     	
-    	posicionesOpiniones.put(idNuevo, posOpinionNueva);
-    	opinionesPorUsuario.insert(usr.getId(), posOpinionNueva);	
+    	posicionesOpiniones.put(idNuevo, posOpinionNueva);//c14
+    	opinionesPorUsuario.insert(usr.getId(), posOpinionNueva);	//c15
     	
-    	String detalle = "POSTEAR:" + usr.getId() + ":" + idNuevo + ":" + idPadre + ":" + texto;
-    	registrarOperacion(2, detalle, idNuevo);
-    }
+    	String detalle = "POSTEAR:" + usr.getId() + ":" + idNuevo + ":" + idPadre + ":" + texto;//c16
+    	registrarOperacion(2, detalle, idNuevo);//c17
+    }//T(c)=c1+c2+c3+c4+c5+c6+c7+c8+c9+c10+c11+c12+c13+c14+c15+c16+c17=0(T(c))=O(1)
     
 
     // Elimina un posteo y todo el subárbol.
@@ -218,58 +217,56 @@ public class MotorDeliberacion{
     //TODO: Implementar la funcionalidad de eliminar un posteo y todo su subárbol en el debate.
     	//Comprobaciones
     	
-    	if(idUsuario == null || idPosteo == null)
+    	if(idUsuario == null || idPosteo == null)//c1
     		throw new IllegalArgumentException("Los IDs no pueden ser nulos.");
     	
-    	idPosteo = idPosteo.trim(); 
-    	idUsuario = idUsuario.trim(); 
+    	idPosteo = idPosteo.trim(); //c2
+    	idUsuario = idUsuario.trim(); //c3
     	
-    	if(idUsuario.equals("") || idPosteo.equals(""))
+    	if(idUsuario.equals("") || idPosteo.equals(""))//c4
         	throw new IllegalArgumentException("Los IDs no pueden ser vacios.");
     	
-        Position<Opinion> posPosteoAEliminar = posicionesOpiniones.get(idPosteo);
+        Position<Opinion> posPosteoAEliminar = posicionesOpiniones.get(idPosteo);//c5
         
-        if(posPosteoAEliminar == null)
+        if(posPosteoAEliminar == null)//c6
         	throw new IllegalArgumentException("No existe un posteo con esa ID.");
-       
-        //System.out.println(posPosteoAEliminar.element().toString());
-        System.out.println(posPosteoAEliminar.element().getUsuario().getId() + "--" + idUsuario);
-        if(posPosteoAEliminar.element().getUsuario().getId() != idUsuario)
+        
+        if(posPosteoAEliminar.element().getUsuario().getId() != idUsuario)//c8
         	throw new IllegalStateException("El usuario pasado por parametro no es propietario del posteo.");
         
         //Obtiene informacion para guardar el registro
-        //Position<Opinion> posPosteoPadre = null;
-        //String idPosPosteoPadre = null;
-        //if(arbol.root() != posPosteoAEliminar) {
-        //	posPosteoPadre = arbol.parent(posPosteoAEliminar);
-        //	idPosPosteoPadre = posPosteoPadre.element().getIdArgumento();
-        //}
-        //String texto = posPosteoAEliminar.element().getTexto();
+        Position<Opinion> posPosteoPadre = null;//c9
+        String idPosPosteoPadre = null;//c10
+        if(arbol.root() != posPosteoAEliminar){//c11 
+        	posPosteoPadre = arbol.parent(posPosteoAEliminar);//c12
+        	idPosPosteoPadre = posPosteoPadre.element().getIdArgumento();//c13
+        }
+        String texto = posPosteoAEliminar.element().getTexto();//c14
         
         //Elimina el posteo
-        elimnarSubarbolPostorden(posPosteoAEliminar,idUsuario,idPosteo);
+        elimnarSubarbolPostorden(posPosteoAEliminar,idUsuario,idPosteo);//m
         
         //Guarda la operacion realizada en el historial ?????
-        //String detalle = "ELIMINAR_POSTEO:" + idUsuario + ":" + idPosteo + ":" + idPosPosteoPadre + ":" + texto;
-    	//registrarOperacion(3, detalle, idPosteo);
+        String detalle = "ELIMINAR_POSTEO:" + idUsuario + ":" + idPosteo + ":" + idPosPosteoPadre + ":" + texto;//c15
+    	registrarOperacion(3, detalle, idPosteo);//c16
     	
-    }
+    }//T(m)=c1+c2+c3+c4+c5+c6+c7+c8+c9+c10+c11+c12+c13+c14+m+c15+c16=O(T(m))=O(m)
     
     private void elimnarSubarbolPostorden(Position<Opinion> posOpinion, String idUsuario, String idPosteo) {    	
     	//Recorrido
-    	for(Position<Opinion> hijo : arbol.children(posOpinion)) {
-    		String idPostHijo = hijo.element().getIdArgumento();
-    		String idUsuarioHijo = hijo.element().getUsuario().getId();
+    	for(Position<Opinion> hijo : arbol.children(posOpinion)) {//m*(c1+c2+c3)
+    		String idPostHijo = hijo.element().getIdArgumento();//c1
+    		String idUsuarioHijo = hijo.element().getUsuario().getId();//c2
     		
-    		elimnarSubarbolPostorden(hijo, idUsuarioHijo, idPostHijo);
+    		elimnarSubarbolPostorden(hijo, idUsuarioHijo, idPostHijo);//c3
     	}
     	
     	//Visita
-    	opinionesPorUsuario.remove(new Entrada(idUsuario, posOpinion));
-    	posicionesOpiniones.remove(idPosteo);
+    	opinionesPorUsuario.remove(new Entrada(idUsuario, posOpinion));//c4
+    	posicionesOpiniones.remove(idPosteo);//c5
     	
-    	arbol.removeNode(posOpinion);    	
-    }
+    	arbol.removeNode(posOpinion);//c6	
+    }//T(m)=m*(c1+c2+c3)+c5+c6)=O(T(m))=O(m)
 
     //obtiene las posiciones en postorden.
     //private void obtenerIdsYPosicionesSubarbol(Position<Opinion> nodo, PositionList<String> ids, PositionList<Position<Opinion>> posiciones) {
@@ -284,27 +281,33 @@ public class MotorDeliberacion{
         posicionesOpiniones = new MapeoConHashAbierto<String,Position<Opinion>>();  		// Guarda la posicion de las opniones en base a su ID
         opinionesPorUsuario = new DiccionarioConHashAbierto<String,Position<Opinion>>();	// Guarda la posicion de las opiniones por ID de usuario				
         logs = new ColaConNodo<Operaciones>();												// Logs de operaciones. No se pueden deshacer.
+       
+        String texto = "CLEAR_DEBATE:" + ":" + "Limpiado de debate";
+        registrarOperacion(4,texto,"-");
     }
 
     //consultar por usuario, devuelve una lista de argumentos que pertenecen a ese usuario.
     public PositionList<Opinion> consultarArgumentosPorUsuario(String idUsuario) {
     //TODO: Implementar la funcionalidad de consultar los argumentos de un usuario específico en el debate.
     	
-    	if(idUsuario == null)
+    	if(idUsuario == null)//c1
         	throw new IllegalArgumentException("El ID de usuario no puede ser nulo.");
     	
-    	idUsuario = idUsuario.trim();
+    	idUsuario = idUsuario.trim();//c2
     	
-    	if(idUsuario.equals(""))
+    	if(idUsuario.equals(""))//c3
         	throw new IllegalArgumentException("El ID de usuario no puede ser vacios..");
     	
-    	PositionList<Opinion> ArgumentosPorUsuario = new ListaDoblementeEnlazada<Opinion>();
-    	for(Entry<String,Position<Opinion>> entrada : opinionesPorUsuario.findAll(idUsuario)) {
-    		ArgumentosPorUsuario.addLast(entrada.getValue().element());
+    	PositionList<Opinion> ArgumentosPorUsuario = new ListaDoblementeEnlazada<Opinion>();//c4
+    	for(Entry<String,Position<Opinion>> entrada : opinionesPorUsuario.findAll(idUsuario)) {//c5
+    		ArgumentosPorUsuario.addLast(entrada.getValue().element());//c6
     	}
     	
-    	return ArgumentosPorUsuario;
-    }
+    	 String texto = "CONSULTA_ARGUMENTO_POR_USUARIO:" + ":" + "Consulta de argumento Por usuario";//c7
+         registrarOperacion(5,texto,"-");//c8
+    	
+    	return ArgumentosPorUsuario;//c9
+    }//T(c)=c1+c2+c3+c4+c5+c6+c7+c8+c9=O(T(c))=1
     
     /**
      * Calcula la polarización de todos los nodos del debate.
@@ -316,40 +319,43 @@ public class MotorDeliberacion{
     public DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> calcularPolarizacionDebate(){
         //TODO
     	
-    	if(arbol.isEmpty())
+    	if(arbol.isEmpty())//c1
     		throw new IllegalStateException("No hay un debate activo");
     	
-    	DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> dictPolarizacion = new DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>>();
-    	postordenPolarizacionTotal(arbol.root(), dictPolarizacion);    	
+    	DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> dictPolarizacion = new DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>>();//c2
+    	postordenPolarizacionTotal(arbol.root(), dictPolarizacion); //m
     	
-    	return dictPolarizacion;
-    }
+    	 String texto = "CONSULTA_POLARIZACION_DEBATE:" + ":" + "Consulta de polarizacion de debate general";//c3
+         registrarOperacion(6,texto,"-");//c4
+    	
+    	return dictPolarizacion;//c5
+    }//T(m)=c1+c2+m+c3+c4+c5=O(T(m))=0(m)
     
     private void postordenPolarizacionTotal(Position<Opinion> posOpinion, DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> dictPolarizacion) {
-    	int contAFavor = 0;
-    	int contEnContra = 0;
+    	int contAFavor = 0;//c1
+    	int contEnContra = 0;//c2
     	//Recorrido
-    	for(Position<Opinion> hijo : arbol.children(posOpinion)) {
-    		postordenPolarizacionTotal(hijo, dictPolarizacion);
+    	for(Position<Opinion> hijo : arbol.children(posOpinion)) {//m
+    		postordenPolarizacionTotal(hijo, dictPolarizacion);//c3
     		
-    		String idHijo = hijo.element().getIdArgumento();
-    		contAFavor += dictPolarizacion.find(idHijo).getValue().find("AFAVOR").getValue();
-        	contEnContra += dictPolarizacion.find(idHijo).getValue().find("ENCONTRA").getValue();
+    		String idHijo = hijo.element().getIdArgumento();//c4
+    		contAFavor += dictPolarizacion.find(idHijo).getValue().find("AFAVOR").getValue();//c5
+        	contEnContra += dictPolarizacion.find(idHijo).getValue().find("ENCONTRA").getValue();//c6
     	}
     	
     	//Visita
-    	if(posOpinion.element().getPostura() == "AFAVOR") {
-    		contAFavor += 1;
+    	if(posOpinion.element().getPostura() == "AFAVOR") {//c7
+    		contAFavor += 1;//c8
     	}else if(posOpinion.element().getPostura() == "ENCONTRA") {
     		contEnContra += 1;
     	}
-    	DiccionarioConHashAbierto<String,Integer> dictPolarizacionPosActual = new DiccionarioConHashAbierto<String,Integer>();
-    	dictPolarizacionPosActual.insert("AFAVOR",contAFavor);
-    	dictPolarizacionPosActual.insert("ENCONTRA",contEnContra);
+    	DiccionarioConHashAbierto<String,Integer> dictPolarizacionPosActual = new DiccionarioConHashAbierto<String,Integer>();//c9
+    	dictPolarizacionPosActual.insert("AFAVOR",contAFavor);//c10
+    	dictPolarizacionPosActual.insert("ENCONTRA",contEnContra);//c11
     	
-    	String idPosActual = posOpinion.element().getIdArgumento();
-    	dictPolarizacion.insert(idPosActual, dictPolarizacionPosActual);    	
-    }
+    	String idPosActual = posOpinion.element().getIdArgumento();//c12
+    	dictPolarizacion.insert(idPosActual, dictPolarizacionPosActual);//c13	
+    }//T(m)=c1+C2+m*(C3+C4+C5+C6)+C7+C8+C9+C10+C11+C12+C13=O(T(m))=O(m)	
 
      /**
     * Calcula la polarización de un nodo específico en el árbol de debate.
@@ -361,31 +367,34 @@ public class MotorDeliberacion{
     public DiccionarioConHashAbierto<String,Integer> calcularPolarizacionNodo(String idNodo){
         //TODO
     	
-    	if(arbol.isEmpty())
+    	if(arbol.isEmpty())//c1
     		throw new IllegalStateException("No hay un debate activo");
     	
-    	if(idNodo == null)
+    	if(idNodo == null)//c2
     		throw new IllegalArgumentException("El ID del nodo no puede ser nulo.");
     		
-    	idNodo = idNodo.trim();
+    	idNodo = idNodo.trim();//c3
     		
-    	if(idNodo.equals(""))
+    	if(idNodo.equals(""))//c4
     		throw new IllegalArgumentException("El ID del nodo no puede estar vacio.");
     	
     	
-    	Position<Opinion> posOpinion = posicionesOpiniones.get(idNodo);
+    	Position<Opinion> posOpinion = posicionesOpiniones.get(idNodo);//c5
     	
-    	if(posOpinion == null)
+    	if(posOpinion == null)//c6
     		throw new IllegalArgumentException("El ID pasado por paramtero no peretenece a ninguna opinion de este debate.");
     	
-    	DiccionarioConHashAbierto<String,Integer> dictPolarizacion = new DiccionarioConHashAbierto<String,Integer>();
+    	DiccionarioConHashAbierto<String,Integer> dictPolarizacion = new DiccionarioConHashAbierto<String,Integer>();//c7
 
-    	dictPolarizacion.insert("AFAVOR", 0);
-    	dictPolarizacion.insert("ENCONTRA", 0);
+    	dictPolarizacion.insert("AFAVOR", 0);//c8
+    	dictPolarizacion.insert("ENCONTRA", 0);//c9
     	
-    	preordenPolarizacion(posOpinion, dictPolarizacion);
+    	preordenPolarizacion(posOpinion, dictPolarizacion);//n
     	
-    	return dictPolarizacion;
+    	 String texto = "CONSULTA_POLARIZACION_NODO:" + ":" + "Consulta de polarizacion de Nodo";//c10
+         registrarOperacion(7,texto,"-");//c11
+    	
+    	return dictPolarizacion;//c12
     }
     
     private void preordenPolarizacion(Position<Opinion> posOpinion, DiccionarioConHashAbierto<String,Integer> dictPolarizacion){
@@ -421,6 +430,9 @@ public class MotorDeliberacion{
     		System.out.println(operacion.getDetalle());
     		logs.enqueue(operacion);
     	}
+    	 String texto = "MOSTRAR_OPERACIONES:" + ":" + "Mostrar Operaciones Realizadas";
+         registrarOperacion(8,texto,"-");
+    	
     }
     
 
@@ -479,5 +491,4 @@ public class MotorDeliberacion{
                 + "usuario=" + a.getUsuario().getId() + " -> " + a.getTexto();
     }
 }
-
 

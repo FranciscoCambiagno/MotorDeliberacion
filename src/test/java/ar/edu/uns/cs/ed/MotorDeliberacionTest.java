@@ -371,7 +371,7 @@ public class MotorDeliberacionTest {
             assertTrue(e.getMessage().contains("No se pudo deshacer la operación POSTEAR"));
             throw e;
         }
-        motor.deshacerUltimaOperacion();
+        //motor.deshacerUltimaOperacion();
     }
 
     // Tests del comportamiento esperado; hoy fallan por bugs (ver motivo en @Ignore).
@@ -472,6 +472,7 @@ public class MotorDeliberacionTest {
         assertPolarizacion(motor.calcularPolarizacionNodo("debate1"), 9, 7);
         // Las otras ramas no cambian.
         assertPolarizacion(motor.calcularPolarizacionNodo("posteo2"), 3, 3);
+        //motor.mostrarOperaciones();
     }
 
     @Test
