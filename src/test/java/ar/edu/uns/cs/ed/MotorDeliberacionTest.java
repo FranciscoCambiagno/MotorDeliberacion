@@ -371,7 +371,7 @@ public class MotorDeliberacionTest {
             assertTrue(e.getMessage().contains("No se pudo deshacer la operación POSTEAR"));
             throw e;
         }
-        //motor.deshacerUltimaOperacion();
+        motor.deshacerUltimaOperacion();
     }
 
     // Tests del comportamiento esperado; hoy fallan por bugs (ver motivo en @Ignore).

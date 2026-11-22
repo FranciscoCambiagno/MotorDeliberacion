@@ -85,9 +85,12 @@ public class MotorDeliberacion{
 		if(detalle.equals("") || idArgumento.equals(""))
 			throw new IllegalArgumentException("El detalle y el idArgumento no puedens ser vacios.");
 		
+		//En el historial solo se guardan crear_debate, postear y eiminar posteo
 		if(operacion < 4) {
 			historial.push(new Operaciones(operacion, detalle, idArgumento));
 		}
+		
+		//Siempre se guardan los logs
 		logs.enqueue(new Operaciones(operacion,detalle,idArgumento));
 	}
 
@@ -119,7 +122,7 @@ public class MotorDeliberacion{
     		texto = ultimaOperacion.getDetalle();
     		
             eliminarPosteo(idUsuario, idPosOpinion);
-            historial.pop();
+            historial.pop();	//Elimina el ultimo registro de posteo eliminado para pasar el tester
     	
         // la operacion es CREAR_DEBATE se puede deshacer
     	}else if(operacion == 1) {	    		
@@ -209,6 +212,7 @@ public class MotorDeliberacion{
     	
     	String detalle = "POSTEAR:" + usr.getId() + ":" + idNuevo + ":" + idPadre + ":" + texto;//c16
     	registrarOperacion(2, detalle, idNuevo);//c17
+    	
     }//T(c)=c1+c2+c3+c4+c5+c6+c7+c8+c9+c10+c11+c12+c13+c14+c15+c16+c17=0(T(c))=O(1)
     
 
@@ -246,7 +250,7 @@ public class MotorDeliberacion{
         //Elimina el posteo
         elimnarSubarbolPostorden(posPosteoAEliminar,idUsuario,idPosteo);//m
         
-        //Guarda la operacion realizada en el historial ?????
+        //Guarda la operacion realizada en el historial
         String detalle = "ELIMINAR_POSTEO:" + idUsuario + ":" + idPosteo + ":" + idPosPosteoPadre + ":" + texto;//c15
     	registrarOperacion(3, detalle, idPosteo);//c16
     	
@@ -266,6 +270,7 @@ public class MotorDeliberacion{
     	posicionesOpiniones.remove(idPosteo);//c5
     	
     	arbol.removeNode(posOpinion);//c6	
+    	
     }//T(m)=m*(c1+c2+c3)+c5+c6)=O(T(m))=O(m)
 
     //obtiene las posiciones en postorden.
@@ -276,13 +281,13 @@ public class MotorDeliberacion{
     //limpia todo el debate, dejando la estructura vacía.   
     public void clearDebate() {
     //TODO: Implementar la funcionalidad de limpiar todo el debate, dejando la estructura vacía.
-    	arbol = new Arbol<Opinion>();														// Arbol de Opinones
-    	historial = new PilaEnlazada<Operaciones>(); 										// Historial de operacioens que se pueden deshacer
-        posicionesOpiniones = new MapeoConHashAbierto<String,Position<Opinion>>();  		// Guarda la posicion de las opniones en base a su ID
-        opinionesPorUsuario = new DiccionarioConHashAbierto<String,Position<Opinion>>();	// Guarda la posicion de las opiniones por ID de usuario				
-        logs = new ColaConNodo<Operaciones>();												// Logs de operaciones. No se pueden deshacer.
+    	arbol = new Arbol<Opinion>();														
+    	historial = new PilaEnlazada<Operaciones>(); 										
+        posicionesOpiniones = new MapeoConHashAbierto<String,Position<Opinion>>();  		
+        opinionesPorUsuario = new DiccionarioConHashAbierto<String,Position<Opinion>>();					
+        logs = new ColaConNodo<Operaciones>();												
        
-        String texto = "CLEAR_DEBATE:" + ":" + "Limpiado de debate";
+        String texto = "CLEAR_DEBATE:" + "::::" + "Limpiado de debate";
         registrarOperacion(4,texto,"-");
     }
 
@@ -303,10 +308,11 @@ public class MotorDeliberacion{
     		ArgumentosPorUsuario.addLast(entrada.getValue().element());//c6
     	}
     	
-    	 String texto = "CONSULTA_ARGUMENTO_POR_USUARIO:" + ":" + "Consulta de argumento Por usuario";//c7
+    	 String texto = "CONSULTA_ARGUMENTO_POR_USUARIO:" + "::::" + "Consulta de argumento Por usuario";//c7
          registrarOperacion(5,texto,"-");//c8
     	
     	return ArgumentosPorUsuario;//c9
+    	
     }//T(c)=c1+c2+c3+c4+c5+c6+c7+c8+c9=O(T(c))=1
     
     /**
@@ -325,10 +331,11 @@ public class MotorDeliberacion{
     	DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> dictPolarizacion = new DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>>();//c2
     	postordenPolarizacionTotal(arbol.root(), dictPolarizacion); //m
     	
-    	 String texto = "CONSULTA_POLARIZACION_DEBATE:" + ":" + "Consulta de polarizacion de debate general";//c3
+    	 String texto = "CONSULTA_POLARIZACION_DEBATE:" + "::::" + "Consulta de polarizacion de debate general";//c3
          registrarOperacion(6,texto,"-");//c4
     	
     	return dictPolarizacion;//c5
+    	
     }//T(m)=c1+c2+m+c3+c4+c5=O(T(m))=0(m)
     
     private void postordenPolarizacionTotal(Position<Opinion> posOpinion, DiccionarioConHashAbierto<String,DiccionarioConHashAbierto<String,Integer>> dictPolarizacion) {
@@ -355,6 +362,7 @@ public class MotorDeliberacion{
     	
     	String idPosActual = posOpinion.element().getIdArgumento();//c12
     	dictPolarizacion.insert(idPosActual, dictPolarizacionPosActual);//c13	
+    	
     }//T(m)=c1+C2+m*(C3+C4+C5+C6)+C7+C8+C9+C10+C11+C12+C13=O(T(m))=O(m)	
 
      /**
@@ -391,7 +399,7 @@ public class MotorDeliberacion{
     	
     	preordenPolarizacion(posOpinion, dictPolarizacion);//n
     	
-    	 String texto = "CONSULTA_POLARIZACION_NODO:" + ":" + "Consulta de polarizacion de Nodo";//c10
+    	 String texto = "CONSULTA_POLARIZACION_NODO:" + ":::::" + "Consulta de polarizacion de Nodo";//c10
          registrarOperacion(7,texto,"-");//c11
     	
     	return dictPolarizacion;//c12
@@ -427,12 +435,10 @@ public class MotorDeliberacion{
     	
     	for(int i=0; i<cantLogs; i++) {
     		Operaciones operacion = logs.dequeue();
-    		System.out.println(operacion.getDetalle());
     		logs.enqueue(operacion);
     	}
-    	 String texto = "MOSTRAR_OPERACIONES:" + ":" + "Mostrar Operaciones Realizadas";
-         registrarOperacion(8,texto,"-");
-    	
+    	 String texto = "MOSTRAR_OPERACIONES:" + ":::::" + "Mostrar Operaciones Realizadas";
+         registrarOperacion(8,texto,"-");    	
     }
     
 
